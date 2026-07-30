@@ -1,10 +1,10 @@
 {
 	"InstallScripts" : 
 	[
-		"F:/Project/Program_part/Build/cmake_install.cmake",
-		"F:/Project/Program_part/Build/Source/LIBS/FILE_LIB/cmake_install.cmake",
-		"F:/Project/Program_part/Build/Source/LIBS/FTP_LIB/cmake_install.cmake",
-		"F:/Project/Program_part/Build/Source/LIBS/A_PC_LIB/cmake_install.cmake"
+		"F:/REP_GITHUB/ConFTP_client/Build/cmake_install.cmake",
+		"F:/REP_GITHUB/ConFTP_client/Build/Source/LIBS/FILE_LIB/cmake_install.cmake",
+		"F:/REP_GITHUB/ConFTP_client/Build/Source/LIBS/FTP_LIB/cmake_install.cmake",
+		"F:/REP_GITHUB/ConFTP_client/Build/Source/LIBS/A_PC_LIB/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

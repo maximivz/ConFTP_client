@@ -176,3 +176,8 @@ std::string S_UP_PATH(std::string path)
     	return path;
 }
 
+
+long ALL_UP_MEMORY()
+{
+	
+}

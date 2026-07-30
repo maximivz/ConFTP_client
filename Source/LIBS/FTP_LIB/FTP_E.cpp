@@ -26,6 +26,7 @@ FTP_CONFIG::~FTP_CONFIG()
 		if(curl)
 		{
 			curl_easy_cleanup(curl);
+			curl_multi_cleanup(multi);
 		}
 		curl_global_cleanup();
 	}
@@ -48,6 +49,9 @@ CURLcode FTP_CONFIG::TEST()
 	CURLcode res = curl_easy_perform(curl);
 	curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
 
+	curl_easy_reset(curl);
+	curl_easy_cleanup(curl);
+
 	return res;
 }
 
@@ -68,6 +72,7 @@ CURLcode FTP_CONFIG::ACTIVATION_PROFILE()
 	curl_easy_setopt(curl, CURLOPT_USERNAME, USERNAME.c_str());
 	curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
 	res = this->TEST();
+	curl_easy_init(curl);
 		
 	if(res == CURLE_OK)
 	{
@@ -352,8 +357,9 @@ void FTP_CONFIG::UPLOAD_FILEm(const std::string PATH_FILE_PC,
 {
 	std::cout << PATH_FILE_PC << "\n";
 	std::cout << this->URL + PATH_FILE_SERVER << "\n";
-	
+
 	OBJ.file = new std::ifstream();
+	OBJ.file_name = GET_FILENAME(PATH_FILE_SERVER);
 	OBJ.file->open(PATH_FILE_PC, std::ios::binary);
 	if(!OBJ.file->is_open()) 
 	{
@@ -382,6 +388,7 @@ void FTP_CONFIG::DOWNLOAD_FILEm(const std::string PATH_FILE_PC,
 {	
 	//файл
 	OBJ.file = new std::ofstream();
+	OBJ.file_name = GET_FILENAME(PATH_FILE_SERVER);
 	OBJ.file->open(PATH_FILE_PC, std::ios::binary);
 
 	if(!(OBJ.file->is_open()))

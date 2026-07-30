@@ -17,7 +17,7 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
 	CURLMcode mer = CURLM_OK;
 	CURLcode easy_error = CURLE_OK;
 
-	std::cout << "#1 - up" << "\n";
+	//std::cout << "#1 - up" << "\n";
 	while(until < VP.size())
 	{
 		until += 5;
@@ -29,8 +29,8 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
 				std::string PDPC = CHANGE_PATH(VP[num].path().string()); 
 				std::string PDSE = (PATH_DIR_SERVER + GET_FILENAME(PATH_DIR_PC) + "/");
 		
-				std::cout << PDPC << "\n";
-				std::cout << PDSE << "\n";
+				//std::cout << PDPC << "\n";
+				//std::cout << PDSE << "\n";
 		
 				//инициализация
 				mass_easy[num].curl = curl_easy_init();
@@ -43,8 +43,8 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
 				std::string PFPC = CHANGE_PATH(VP[num].path().string());
 				std::string PFSE = CHANGE_PATH(BUILD_UPLOAD_PATH(PFPC, (PATH_DIR_SERVER + GET_FILENAME(PATH_DIR_PC))));
 
-				std::cout << PFPC << "\n";
-				std::cout << PFSE << "\n";
+				//std::cout << PFPC << "\n";
+				//std::cout << PFSE << "\n";
 			
 				//инициализация
 				mass_easy[num].curl = curl_easy_init();
@@ -66,7 +66,7 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
 			num++;		
 		}
 
-		std::cout << "#2 - up" << "\n";
+		//std::cout << "#2 - up" << "\n";
 
 		int run = 0;
 
@@ -133,20 +133,66 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
     		}
 		
 	}
+	
+	// обработка завершившихся хендлов
+	CURLMsg* msg;
+	int msgs_left = 0;
+
+	while ((msg = curl_multi_info_read(multi, &msgs_left)) != nullptr && msgs_left > 0)
+	{
+    		// завершён один из объектов
+    		if (msg->msg == CURLMSG_DONE)
+    		{
+			// есть ли ошибка по завершению
+        		if (msg->data.result != CURLE_OK)
+        		{
+            			easy_error = msg->data.result;
+        		}
+
+        		// какой завершился
+        		CURL* fin = msg->easy_handle;
+        		int f_num = 0;
+
+        		// поиск
+        		while (f_num < VP.size())
+			{
+            			// нашли
+           			if (mass_easy[f_num].curl == fin)
+            			{
+                			// имеется файл -> закрытие его
+                			if (mass_easy[f_num].file != nullptr)
+                			{
+						std::cout << mass_easy[f_num].file_name << " -- " << curl_easy_strerror(easy_error) << "\n";
+                    				mass_easy[f_num].file->close();
+                    				delete mass_easy[f_num].file;
+                    				mass_easy[f_num].file = nullptr;
+                			}
+
+                			// освобождение завершившегося
+                			curl_multi_remove_handle(multi, fin);
+                			curl_easy_cleanup(fin);
+                			mass_easy[f_num].curl = nullptr;
+
+                			break; // нашли — дальше искать не нужно
+            			}
+        			f_num++;
+			}
+		}
+        
+    	}
 
 
-	std::cout << "#3 - up" << "\n";
-	std::cout << curl_easy_strerror(easy_error) << "\n";
-	std::cout << curl_multi_strerror(mer) << "\n";
 	
 	//имеються ошибки-> Выход
 	if(mer != CURLM_OK || easy_error != CURLE_OK)
 	{
+		std::cout << curl_easy_strerror(easy_error) << "\n";
+		std::cout << curl_multi_strerror(mer) << "\n";
 		CLEANM_UP(mass_easy,VP.size());
 		return mer;
 	}
 
-	std::cout << "#4 - up" << "\n";	
+	//std::cout << "#4 - up" << "\n";	
 
 	//рекурсия и продолжение передачи по дир
 	num = 0;
@@ -173,7 +219,7 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
 		num++;
 	}
 
-	std::cout << "#5 - up" << "\n";
+	//std::cout << "#5 - up" << "\n";
 	
 	
 	
@@ -204,7 +250,6 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
 					CLEANM_DOWN(mass_easy,VP.size());
 					return CURLM_INTERNAL_ERROR;
 				}
-
 			}
 			else
 			{
@@ -256,7 +301,6 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
         			if (msg->data.result != CURLE_OK)
         			{
             				easy_error = msg->data.result;
-            				std::cout << curl_easy_strerror(msg->data.result) << "\n";
         			}
 
         			// какой завершился
@@ -272,6 +316,7 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
                 				// имеется файл -> закрытие его
                 				if (mass_easy[f_num].file != nullptr)
                 				{
+							std::cout << mass_easy[f_num].file_name << " -- " << curl_easy_strerror(easy_error) << "\n";
                     					mass_easy[f_num].file->close();
                     					delete mass_easy[f_num].file;
                     					mass_easy[f_num].file = nullptr;
@@ -291,13 +336,56 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
 		}
 	}
 
-	//std::cout << "#3 - down" << "\n";
-	//std::cout << curl_easy_strerror(easy_error) << "\n";
-	//std::cout << curl_multi_strerror(mer) << "\n";
+	// обработка завершившихся хендлов
+	CURLMsg* msg;
+	int msgs_left = 0;
+	while ((msg = curl_multi_info_read(multi, &msgs_left)) != nullptr && msgs_left > 0)
+	{
+    		// завершён один из объектов
+    		if (msg->msg == CURLMSG_DONE)
+    		{
+        		// есть ли ошибка по завершению
+        		if (msg->data.result != CURLE_OK)
+        		{
+            			easy_error = msg->data.result;
+            			std::cout << curl_easy_strerror(msg->data.result) << "\n";
+        		}
 
+        		// какой завершился
+        		CURL* fin = msg->easy_handle;
+        		int f_num = 0;
+
+        		// поиск
+        		while (f_num < VP.size())
+			{
+            			// нашли
+           			if (mass_easy[f_num].curl == fin)
+            			{
+                			// имеется файл -> закрытие его
+                			if (mass_easy[f_num].file != nullptr)
+                			{
+                    				mass_easy[f_num].file->close();
+                    				delete mass_easy[f_num].file;
+                    				mass_easy[f_num].file = nullptr;
+                			}
+
+                			// освобождение завершившегося
+                			curl_multi_remove_handle(multi, fin);
+                			curl_easy_cleanup(fin);
+                			mass_easy[f_num].curl = nullptr;
+
+                			break; // нашли — дальше искать не нужно
+            			}
+        			f_num++;
+			}
+		}
+        
+    	}
 
 	if(mer != CURLM_OK || easy_error != CURLE_OK)
 	{
+		std::cout << curl_easy_strerror(easy_error) << "\n";
+		std::cout << curl_multi_strerror(mer) << "\n";
 		CLEANM_DOWN(mass_easy,VP.size());
 		return mer;
 	}
@@ -385,6 +473,7 @@ void FTP_CONFIG::PROSTO()
 	}
 }
 
+//мусорка - мусоросжигатель - крEматорий
 void CLEANM_UP(UPLOAD_TASK*& mass_easy, int size)
 {
 	int num{0};
@@ -397,9 +486,11 @@ void CLEANM_UP(UPLOAD_TASK*& mass_easy, int size)
 			delete mass_easy[num].file;
 			mass_easy[num].file = nullptr;
 
-			if (mass_easy[num].curl)
-				curl_easy_cleanup(mass_easy[num].curl);
 		}
+
+		if (mass_easy[num].curl)
+				curl_easy_cleanup(mass_easy[num].curl);
+
 		num++;
 	}
 
@@ -419,9 +510,14 @@ void CLEANM_DOWN(DOWNLOAD_TASK*& mass_easy, int size)
 			delete mass_easy[num].file;
 			mass_easy[num].file = nullptr;
 
-			if (mass_easy[num].curl)
-				curl_easy_cleanup(mass_easy[num].curl);
 		}
+
+		if (mass_easy[num].curl)
+		{
+			//std::cout << num << "\n";
+			curl_easy_cleanup(mass_easy[num].curl);
+		}
+
 		num++;
 	}
 

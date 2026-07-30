@@ -8,6 +8,7 @@
 //--------------СТРУКТУРА
 struct UPLOAD_TASK
 {
+	std::string file_name = "NONAME";
 	CURL* curl;
 	std::ifstream* file = nullptr;
 	bool flag{true};
@@ -15,6 +16,7 @@ struct UPLOAD_TASK
 
 struct DOWNLOAD_TASK
 {
+	std::string file_name = "NONAME";
 	CURL* curl;
 	std::ofstream* file = nullptr;
 	bool flag{true};

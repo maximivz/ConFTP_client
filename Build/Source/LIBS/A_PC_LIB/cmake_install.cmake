@@ -1,4 +1,4 @@
-# Install script for directory: F:/Project/Program_part/Source/LIBS/A_PC_LIB
+# Install script for directory: F:/REP_GITHUB/ConFTP_client/Source/LIBS/A_PC_LIB
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,6 +40,6 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "F:/Project/Program_part/Build/Source/LIBS/A_PC_LIB/install_local_manifest.txt"
+  file(WRITE "F:/REP_GITHUB/ConFTP_client/Build/Source/LIBS/A_PC_LIB/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
