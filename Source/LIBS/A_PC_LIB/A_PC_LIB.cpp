@@ -272,10 +272,7 @@ void SERVER_FILE_SYSTEM(FTP_CONFIG& T_FTP,std::string& GET_OBJ,char& Tobj)
 				{
 					PATH = VD[num].PATH;
 					CURLcode res = T_FTP.DIRGET(VD, PATH);
-					if(res != CURLE_OK)
-					{
-						std::cout << curl_easy_strerror(res) << "\n";
-					}
+					OK_CONNECTION(res);
 
 					WATCH_DIR(VD, T_FTP.URL);	
 				}
@@ -505,19 +502,12 @@ void ADMIN(std::vector<FTP_CONFIG>& VECTOR)
 				break;
 			case(5):
 				res = T_FTP->UPLOAD_PROCESS(CHANGE_PATH(CLIENT_OBJ),SERVER_OBJ);
-				if(res != CURLE_OK)
-				{
-					std::cout << curl_easy_strerror(res) << "\n";
-				}
+				OK_CONNECTION(res);
 
 				break;
 			case(6):
 				res = T_FTP->DOWNLOAD_PROCESS(CHANGE_PATH(CLIENT_OBJ),SERVER_OBJ);
-				if(res != CURLE_OK)
-				{
-					std::cout << curl_easy_strerror(res) << "\n";
-				}
-				
+				OK_CONNECTION(res);	
 				break;
 			case(7):
 				if(!first_time)

@@ -72,7 +72,7 @@ CURLcode FTP_CONFIG::ACTIVATION_PROFILE()
 	curl_easy_setopt(curl, CURLOPT_USERNAME, USERNAME.c_str());
 	curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
 	res = this->TEST();
-	curl_easy_init(curl);
+	curl = curl_easy_init();
 		
 	if(res == CURLE_OK)
 	{

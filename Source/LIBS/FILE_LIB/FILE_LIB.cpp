@@ -2,15 +2,17 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include "FILE_LIB.h"
+#include "FILE_LIB.hpp"
 
 //Робата с TXT
 bool GET_INFO(std::vector <FTP_CONFIG>& VECTOR)
 {
 	int num_el = 0;
 	std::string line;
+	std::string PATH = GetExePath() + "VECTOR.txt";
+	//std::cout << PATH << "\n";
 	FTP_CONFIG OBJ("","","","");	
-	std::ifstream VECTOR_F("VECTOR.txt");
+	std::ifstream VECTOR_F(PATH);
 
 	if(VECTOR_F.is_open())
 	{
@@ -55,7 +57,7 @@ bool GET_INFO(std::vector <FTP_CONFIG>& VECTOR)
 	}
 	else
 	{
-		//std::cout << size << "3\n";
+		std::cout << "FATAL_ERROR_OF_MEMORY" << "\n";
 		VECTOR_F.close();
 		return false;
 	}
@@ -66,9 +68,11 @@ bool GET_INFO(std::vector <FTP_CONFIG>& VECTOR)
 
 bool WRITE_INFO(std::vector <FTP_CONFIG>& VECTOR)
 {
-	std::ofstream VECTOR_f("VECTOR.txt");
+	std::string PATH = GetExePath() + "VECTOR.txt";
+	std::ofstream VECTOR_f(PATH);
 	if(!VECTOR_f.is_open()) 
 	{
+		std::cout << "FATAL_ERROR_OF_MEMORY" << "\n";
 		return false;
 	}
 

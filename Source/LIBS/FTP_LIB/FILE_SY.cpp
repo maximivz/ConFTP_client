@@ -27,13 +27,23 @@ std::string UP_PATH(std::string path)
 
 std::string GET_ROOT()
 {
+	bool root_continue{true};
 	std::string ROOT;
 	std::cout << "Введите корневую папку: " << "\n";
 	std::cin  >> ROOT;
-	while(!std::filesystem::exists(ROOT) && std::filesystem::is_directory(ROOT))
+	while(root_continue)
 	{
+		if(std::filesystem::exists(ROOT))
+		{
+			if(std::filesystem::is_directory(ROOT))
+			{
+				root_continue = false;
+				break;
+			}
+		}
 		std::cout << "Не существует" << "\n";
 		std::cout << "Ввод: " << "\n";
+		std::cin >> ROOT;
 	}
 	return ROOT;
 }

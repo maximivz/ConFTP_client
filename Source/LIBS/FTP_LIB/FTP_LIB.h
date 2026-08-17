@@ -172,4 +172,4 @@ std::string S_UP_PATH(std::string path);
 void CLEANM_UP(UPLOAD_TASK*& mass_easy, int size);
 
 void CLEANM_DOWN(DOWNLOAD_TASK*& mass_easy, int size);
-
+bool OK_CONNECTION(CURLcode MESSAGE);

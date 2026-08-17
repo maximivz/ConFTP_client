@@ -69,6 +69,19 @@ size_t READ_CALLB(char* ptr,
 	return bytes_read;
 }
 
+bool OK_CONNECTION(CURLcode MESSAGE)
+{
+	if(MESSAGE == CURLE_OK)
+	{
+		return true;
+	}
+	else
+	{
+		std::cout << curl_easy_strerror(MESSAGE) << "\n";		
+		return false;
+	}
+}
+
 //(DOWNLOAD) - FILE
 size_t WRITE_CALLB_FILE(void* ptr,
 		     size_t size,
@@ -145,10 +158,6 @@ bool StringToInt(const std::string& str, int& value)
     	}
 }
 
-void clearScreenANSI() {
-    std::cout << "\033[2J\033[1;1H";
-}
-
 std::string EncodeSpaces(std::string s)
 {
     std::string out;
@@ -174,10 +183,4 @@ std::string S_UP_PATH(std::string path)
 
 
     	return path;
-}
-
-
-long ALL_UP_MEMORY()
-{
-	
 }
