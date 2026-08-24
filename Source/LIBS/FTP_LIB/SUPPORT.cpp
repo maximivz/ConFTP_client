@@ -5,7 +5,7 @@
 #include <curl/curl.h>
 #include <algorithm> 
 
-
+//очистка от \r и \n
 void CLEAN_STRING(std::string& str)
 {
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
@@ -15,8 +15,8 @@ void CLEAN_STRING(std::string& str)
 //изменение пути
 std::string CHANGE_PATH(std::string path)
 {
-    if(path == "*")
-        return "";
+    //if(path == "*")
+    //	return "";
 
     std::replace(
         path.begin(),
@@ -27,6 +27,7 @@ std::string CHANGE_PATH(std::string path)
 
     return path;
 }
+
 //получение имени файла
 std::string GET_FILENAME(std::string path)
 {
@@ -43,7 +44,22 @@ std::string GET_FILENAME(std::string path)
 	return path.substr(pos + 1);
 }
 
-//(UPLOAD)
+
+//проверка результата вывода
+bool OK_CONNECTION(CURLcode MESSAGE)
+{
+	if(MESSAGE == CURLE_OK)
+	{
+		return true;
+	}
+	else
+	{
+		std::cout << curl_easy_strerror(MESSAGE) << "\n";		
+		return false;
+	}
+}
+
+//(UPLOAD) - колбэк функция для пошаговой отпраки файла на сервер
 size_t READ_CALLB(char* ptr,     
 		  size_t size,   
 		  size_t part,	 
@@ -69,20 +85,7 @@ size_t READ_CALLB(char* ptr,
 	return bytes_read;
 }
 
-bool OK_CONNECTION(CURLcode MESSAGE)
-{
-	if(MESSAGE == CURLE_OK)
-	{
-		return true;
-	}
-	else
-	{
-		std::cout << curl_easy_strerror(MESSAGE) << "\n";		
-		return false;
-	}
-}
-
-//(DOWNLOAD) - FILE
+//(DOWNLOAD) - FILE - колбэк функция для пошаговой отпраки файла
 size_t WRITE_CALLB_FILE(void* ptr,
 		     size_t size,
 		     size_t part,
@@ -101,7 +104,7 @@ size_t WRITE_CALLB_FILE(void* ptr,
 	return bytes_write;
 }
 
-//(DOWNLOAD) - DIR
+//(DOWNLOAD) - DIR - колбэк функция для пошаговой отпраки данных о директории сервера
 size_t WRITE_CALLB_DIR(void* ptr, // данные с сервера
 		     size_t size,
 		     size_t part,
@@ -112,6 +115,7 @@ size_t WRITE_CALLB_DIR(void* ptr, // данные с сервера
 	return size*part;
 }
 
+//постройка DOWN PATH
 std::string BUILD_DOWNLOAD_PATH(std::string local_dir,
 				std::string server_file)
 {
@@ -126,6 +130,7 @@ std::string BUILD_DOWNLOAD_PATH(std::string local_dir,
     	return out_local; 
 }
 
+//постройка UP PATH
 std::string BUILD_UPLOAD_PATH(std::string local_file,
 			      std::string server_dir) 
 {
@@ -143,6 +148,7 @@ std::string BUILD_UPLOAD_PATH(std::string local_file,
 	return out_server;
 }
 
+//перевод из стринг в инт
 bool StringToInt(const std::string& str, int& value)
 {
     	try
@@ -152,23 +158,27 @@ bool StringToInt(const std::string& str, int& value)
 
 		return pos == str.size();
     	}
-    	catch (...)
+    	catch(...)
     	{
         	return false;
     	}
 }
 
-std::string EncodeSpaces(std::string s)
+//Замена пробелов на %20
+std::string ChangeSpaces(std::string s)
 {
     std::string out;
     for(char c : s)
     {
-        if(c == ' ') out += "%20";
-        else out += c;
+        if(c == ' ') //да
+		out += "%20";
+        else //нет
+		out += c;
     }
     return out;
 }
 
+//Сброс пути обратно к верхней дир
 std::string S_UP_PATH(std::string path)
 {
  	if (!path.empty() && path.back() == '/')

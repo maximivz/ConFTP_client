@@ -1,2 +1,4 @@
 Build/*
 !Build/Release/
+/Build/Release/*
+!Build/Release/.gitkeep

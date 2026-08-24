@@ -34,6 +34,8 @@ elseif(UNIX AND NOT APPLE)
 		PRIVATE ${CURL_LIBRARIES})
 endif()
 
+target_include_directories(FILE_LIB PRIVATE ${CMAKE_SOURCE_DIR}/Source/LIBS/JSON)
+
 target_link_libraries(KINY
 	PRIVATE FILE_LIB)
 

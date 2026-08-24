@@ -3,74 +3,51 @@
 #include <iostream>
 #include <vector>
 #include "FILE_LIB.hpp"
+#include <nlohmann/json.hpp>
 
 //Робата с TXT
 bool GET_INFO(std::vector <FTP_CONFIG>& VECTOR)
 {
-	int num_el = 0;
-	std::string line;
-	std::string PATH = GetExePath() + "VECTOR.txt";
-	//std::cout << PATH << "\n";
+	std::string PATH = GetExePath() + "LIST.json";
 	FTP_CONFIG OBJ("","","","");	
-	std::ifstream VECTOR_F(PATH);
+	std::ifstream JSON_FILE(PATH);
 
-	if(VECTOR_F.is_open())
-	{
-		while(getline(VECTOR_F,line))
-		{
-			//std::cout << line << "\n";
-			if(line == "#79")
-			{
-				num_el = 79;
-			}
-
-			switch(num_el)
-			{
-				case(0):
-					OBJ.URL = CHANGE_PATH(line);
-					break;
-				case(1):
-					OBJ.USERNAME = line;
-					break;
-				case(2):
-					OBJ.PASSWORD = line;
-					break;
-				case(3): 
-					OBJ.CERT_PATH = CHANGE_PATH(line);
-					VECTOR.push_back(OBJ);
-					num_el = -1;
-					break;
-				case(79):
-					//std::cout << size << "1\n";
-					VECTOR_F.close();
-					return true;
-					break;
-				default:
-					//std::cout << size << "2\n";	
-					VECTOR_F.close();
-					return false;
-		 			break;
-
-			}
-			num_el++;
-		}
-	}
-	else
+	if(!JSON_FILE.is_open())
 	{
 		std::cout << "FATAL_ERROR_OF_MEMORY" << "\n";
-		VECTOR_F.close();
+		JSON_FILE.close();
 		return false;
 	}
-	//std::cout << size << "4\n";	
-	VECTOR_F.close();
+
+	nlohmann::json json_list;
+	JSON_FILE >> json_list;
+	JSON_FILE.close();
+
+	size_t size = json_list["profiles"].size();
+	size_t index{0};
+
+	while(index < size)
+	{
+		OBJ.URL = CHANGE_PATH(json_list["profiles"][index]["URL"]);
+		OBJ.USERNAME = json_list["profiles"][index]["USER"];
+		OBJ.PASSWORD = json_list["profiles"][index]["PASSWORD"];
+		OBJ.CERT_PATH = CHANGE_PATH(json_list["profiles"][index]["CERT"]);
+
+		VECTOR.push_back(OBJ);
+		index++;
+	}	
 	return true;
 }
 
 bool WRITE_INFO(std::vector <FTP_CONFIG>& VECTOR)
 {
-	std::string PATH = GetExePath() + "VECTOR.txt";
-	std::ofstream VECTOR_f(PATH);
-	if(!VECTOR_f.is_open()) 
+	std::string PATH = GetExePath() + "LIST.json";
+	std::ofstream JSON_FILE(PATH);
+	nlohmann::json list;
+	nlohmann::json profile;
+	list["profiles"] = nlohmann::json::array();	
+
+	if(!JSON_FILE.is_open()) 
 	{
 		std::cout << "FATAL_ERROR_OF_MEMORY" << "\n";
 		return false;
@@ -78,14 +55,16 @@ bool WRITE_INFO(std::vector <FTP_CONFIG>& VECTOR)
 
 	for(int EL{0};EL < VECTOR.size();EL++)
 	{
-		VECTOR_f << VECTOR[EL].URL << "\n";
-		VECTOR_f << VECTOR[EL].USERNAME << "\n";
-		VECTOR_f << VECTOR[EL].PASSWORD << "\n";
-		VECTOR_f << VECTOR[EL].CERT_PATH << "\n";
+		profile["URL"] = VECTOR[EL].URL;
+		profile["USER"] = VECTOR[EL].USERNAME;
+		profile["PASSWORD"] = VECTOR[EL].PASSWORD;
+		profile["CERT"] = VECTOR[EL].CERT_PATH;
+
+		list["profiles"].push_back(profile);
 	}
 
-	VECTOR_f << "#79";
-	VECTOR_f.close();
+	JSON_FILE << list.dump(4);
+	
 	return true;
 }
 
