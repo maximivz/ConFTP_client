@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <sstream>
 
-
+//просмотр директорий на клиенте (сбор о ней информации в вектор (мобильный массив))
 void DIRGET_CLIENT(std::vector<std::filesystem::directory_entry>& VP,std::string path)
 {
 	std::filesystem::path p = path;
@@ -65,5 +65,3 @@ std::string GET_FILE_TIME(const std::filesystem::directory_entry& entry)
 
     return oss.str();
 }
-
-

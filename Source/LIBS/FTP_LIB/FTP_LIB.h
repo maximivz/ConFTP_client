@@ -9,15 +9,17 @@
 struct UPLOAD_TASK
 {
 	std::string file_name = "NONAME";
-	CURL* curl;
+	CURL* curl = nullptr;
+	char type = '-';
 	std::ifstream* file = nullptr;
+	struct curl_slist* command = nullptr;
 	bool flag{true};
 };
 
 struct DOWNLOAD_TASK
 {
 	std::string file_name = "NONAME";
-	CURL* curl;
+	CURL* curl = nullptr;
 	std::ofstream* file = nullptr;
 	bool flag{true};
 };
@@ -60,19 +62,23 @@ class FTP_CONFIG
 		   const std::string USERNAME_in,
 		   const std::string PASSWORD_in, 
 		   const std::string CERT_PATH_in);
+
 	//деконструктор
 	~FTP_CONFIG();
+
 	//тестовый запус
 	CURLcode TEST();
+
 	//активация профиля
 	CURLcode ACTIVATION_PROFILE();
+
 	//деактивация профиля
-	void DEACTIVATION_PROFILE();
+	void DEACTIVATION_PROFILE();	
 	
-	//загрузка из сервера - процесс
+	//загрузка из сервера - процесс -- DOWNLOAD TYPE
 	CURLcode DOWNLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ);
 
-	//загрузка из клиента - процесс
+	//загрузка из клиента - процесс -- DOWNLOAD TYPE
 	CURLcode UPLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ);
 
 	//функиция загрузки данных на сервер
@@ -82,35 +88,31 @@ class FTP_CONFIG
 	CURLcode UPLOAD_FILE(const std::string PATH_FILE_PC,
                 	 	const std::string URL_FILE_SERVER);
 
+	//функция создния курл для мульти для создания директории для PC -- DOWNLOAD TYPE	
 	bool CREATE_CDIRm(std::string PATH_DIR_PC, std::string PATH_DIR_SERVER);
-
+	
+	//функция создния курл для мульти для создания директории для SERVER -- UPLOAD TYPE
 	void CREATE_SDIRm(std::string PATH_DIR_PC, std::string PATH_DIR_SERVER, UPLOAD_TASK& OBJ);
-
-	void UPLOAD_FILEm(const std::string PATH_FILE_PC,
-        		  const std::string PATH_FILE_SERVER, UPLOAD_TASK& OBJ);
-
+	
+	//функция создния курл для мульти для создания файлов для SERVER -- UPLOAD TYPE
+	void UPLOAD_FILEm(const std::string PATH_FILE_PC, 
+			  const std::string PATH_FILE_SERVER, UPLOAD_TASK& OBJ);
+	
+	//функция создния курл для мульти для создания файлов для PC -- UPLOAD TYPE
 	void DOWNLOAD_FILEm(const std::string PATH_FILE_PC,
 			    const std::string PATH_FILE_SERVER, DOWNLOAD_TASK& OBJ);
-
-	
 
 	//получение данных о директории (сборка древа директории)
 	CURLcode DIRGET(std::vector <FILE_INFO>& VD, std::string ADD_PATH);
 
-
+	//MUSOR - EBANI
 	CURLcode CREATE_SDIR(std::string PATH_DIR_PC, std::string PATH_DIR_SERVER);
 	bool CREATE_CDIR(std::string PATH_DIR_PC, FILE_INFO S_OBJ);
 
-	
-
 	//multi
-	CURLMcode MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> VP,std::string PATH_DIR_PC, std::string PATH_DIR_SERVER);
+	CURLMcode MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> VP, std::string PATH_DIR_SERVER);
 	
-	CURLMcode MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ,std::string S_OBJ);
-
-	void PROSTO();
-
-
+	CURLMcode MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ);
 };
 
 //--------------ВСПОМОГАТ
@@ -128,6 +130,9 @@ size_t WRITE_CALLB_DIR(void* ptr,
 		  size_t size,
 		  size_t part,
  		  void* userdata);
+
+//Создание пути для UPLOAD Dir Creating
+	struct curl_slist* CREATE_COMMAND_UCREATE_DIR(std::string PATH_DIR_SERVER, std::string PATH_DIR_PC);
 
 //изменение пути
 std::string CHANGE_PATH(std::string);

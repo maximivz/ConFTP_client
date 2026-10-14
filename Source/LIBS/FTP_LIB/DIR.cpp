@@ -31,14 +31,14 @@ void PARSER_DIR(FILE_INFO& DIR_OBJ, std::string DIR_LINE)
 		DIR_OBJ.name.erase(0, 1);
 }
 
-//ВЫВОД директории на сервер
+//ВЫВОД директории c сервер (просмотр дир сервера)
 CURLcode FTP_CONFIG::DIRGET(std::vector <FILE_INFO>& VD, std::string ADD_PATH)
 {
 	VD.clear();
 	std::string DIRLIST{""};
 	std::string line{""};
 
-	curl_easy_setopt(curl, CURLOPT_URL, (URL + ADD_PATH).c_str());	
+	curl_easy_setopt(curl, CURLOPT_URL, (URL + ADD_PATH + "/").c_str());	
 	curl_easy_setopt(curl, CURLOPT_USERNAME, USERNAME.c_str());
 	curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
 
@@ -47,6 +47,8 @@ CURLcode FTP_CONFIG::DIRGET(std::vector <FILE_INFO>& VD, std::string ADD_PATH)
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &DIRLIST);
 
 	CURLcode res = curl_easy_perform(curl);
+	curl_easy_reset(curl);
+	
 
 	if(res != CURLE_OK)
 		return res;
@@ -58,9 +60,7 @@ CURLcode FTP_CONFIG::DIRGET(std::vector <FILE_INFO>& VD, std::string ADD_PATH)
 		FILE_INFO OBJ;
 		PARSER_DIR(OBJ,line);
 		
-
-		OBJ.PATH = ADD_PATH + OBJ.name;	
-		if(OBJ.type == 'd'){OBJ.PATH += "/";}
+		OBJ.PATH = ADD_PATH + "/" + OBJ.name;		
 		VD.push_back(OBJ);	
 	}
 	return res;

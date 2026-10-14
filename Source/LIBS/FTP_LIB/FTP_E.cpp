@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
-//конструктор
+//конструктор_
 FTP_CONFIG::FTP_CONFIG(const std::string URL_in, 
 		   const std::string USERNAME_in,
 		   const std::string PASSWORD_in, 
@@ -18,91 +18,128 @@ FTP_CONFIG::FTP_CONFIG(const std::string URL_in,
 	CERT_PATH = CERT_PATH_in;
 }
 
-//деконструктор
+//деконструктор_
 FTP_CONFIG::~FTP_CONFIG()
 {
-	if(ACTIVATE)
+	if(curl)
 	{
-		if(curl)
-		{
-			curl_easy_cleanup(curl);
-			curl_multi_cleanup(multi);
-		}
-		curl_global_cleanup();
+		curl_easy_cleanup(curl);	
+		curl = nullptr;
+	}
+
+	if(multi)
+	{
+		curl_multi_cleanup(multi);
+		multi = nullptr;
 	}
 }
 
-//тестовый запуск
+//тестовый запуск_
 CURLcode FTP_CONFIG::TEST()
 {
+	//проверка инициализация
 	if(!curl) 
 		return CURLE_FAILED_INIT;	
-	
-	CURL* curl = curl_easy_init();
 
-	curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());	
+	//настройка
+	curl_easy_setopt(curl, CURLOPT_URL, (URL + "/").c_str());	
 	curl_easy_setopt(curl, CURLOPT_USERNAME, USERNAME.c_str());
 	curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
 
 	curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 
+	//выполнение
 	CURLcode res = curl_easy_perform(curl);
+
+	//сброс
 	curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
-
 	curl_easy_reset(curl);
-	curl_easy_cleanup(curl);
 
+	//вывод результата
 	return res;
 }
 
-//активация профил
+//активация профил_
 CURLcode FTP_CONFIG::ACTIVATION_PROFILE()
 {
-	curl_global_init(CURL_GLOBAL_ALL);
-	multi = curl_multi_init();
+//ИНИЦИАЛИЗАЦИЯ:
+	//#1 - для изи
+	//если уже есть 
+	if(curl)
+	{ 
+		curl_easy_cleanup(curl);	
+		curl = nullptr;
+	}
 	curl = curl_easy_init();
-	CURLcode res;
-
+	//проверка
 	if(!curl)
 	{ 
 		return CURLE_FAILED_INIT;	
 	}
+	
+	//#2 - для multi
+	//если уже есть 
+	if(multi)
+	{ 
+		curl_multi_cleanup(multi);	
+		multi = nullptr;
+	}
+	multi = curl_multi_init();
+	//проверка
+	if(!multi)
+	{ 
+		return CURLE_FAILED_INIT;	
+	}
+	//для мульти
+	multi = curl_multi_init();
+	
+	//для разбора результата
+	CURLcode res;
 
-	curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());	
-	curl_easy_setopt(curl, CURLOPT_USERNAME, USERNAME.c_str());
-	curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
+//ТЕСТ
+	//результат
 	res = this->TEST();
-	curl = curl_easy_init();
 		
+
+	//Сработало
 	if(res == CURLE_OK)
 	{
 		ACTIVATE = true;
 	}
-	else
+	else//НЕТ
 	{
 		if(curl)
 		{
 			curl_easy_cleanup(curl);
-			curl_multi_cleanup(multi);
+			curl = nullptr;
 		}
-		curl_global_cleanup();
-		ACTIVATE = false;		
+
+		if(multi)
+		{
+			curl_multi_cleanup(multi);
+			curl = nullptr;
+		}
+		ACTIVATE = false;	
 	}
 	
 	return res;
 }
 
+//деактивация_
 void FTP_CONFIG::DEACTIVATION_PROFILE()
 {
-	if(ACTIVATE)
+	if(curl)
 	{
-		if(curl)
-		{
-			curl_easy_cleanup(curl);
-			curl_multi_cleanup(multi);
-		}
-		curl_global_cleanup();
+		curl_easy_cleanup(curl);
+		curl = nullptr;
 	}
+
+	if(multi)
+	{
+		curl_multi_cleanup(multi);
+		curl = nullptr;
+	}	
+
 	ACTIVATE = false;	
 }
 
@@ -111,37 +148,61 @@ CURLcode FTP_CONFIG::DOWNLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
 	CURLcode res;
 	bool flag{true};
 
+	//Это директория
 	if(S_OBJ.type == 'd')
-	{	
-		if(!std::filesystem::exists(C_OBJ + GET_FILENAME(S_OBJ.PATH)))
+	{
+		//есть такая
+		int m;
+		std::error_code ecr;
+		std::string PATH_NEW_DIR = BUILD_DOWNLOAD_PATH(C_OBJ ,S_OBJ.PATH);
+		std::cout << PATH_NEW_DIR << "\n";
+		std::cin >> m;
+
+		//std::string PATH_NEW_DIR = BUILD_DOWNLOAD_PATH(C_OBJ ,GET_FILENAME(S_OBJ.PATH));
+		if(!std::filesystem::exists(PATH_NEW_DIR))
 		{
-			if(!std::filesystem::create_directory(C_OBJ + GET_FILENAME(S_OBJ.PATH)))
+			//если такой нет то создаем
+			if(!std::filesystem::create_directory(PATH_NEW_DIR, ecr))
 			{
 				flag = false;
 			}
+
+			if(ecr)
+			{
+				std::cerr << "ERROR_FILESYSTEM_CREATING: " << ecr.message() << "\n";
+			}
 		}
 
+		//получилось
 		if(flag)
 		{
 			res = CURLE_OK;
 		}
-		else
+		else //нет
 		{
-			res = CURLE_URL_MALFORMAT;
+			return CURLE_URL_MALFORMAT;
 		}
 		
-		int num{0};
-		std::vector <FILE_INFO> VD;
-		if(this->DIRGET(VD, S_OBJ.PATH) != CURLE_OK)
-			return CURLE_URL_MALFORMAT;
+		std::cin >> m;
 		
-		if(this->MDOWNLOAD_DIR(VD,C_OBJ,S_OBJ.PATH) == CURLM_OK)
-			return CURLE_OK;
+		//сборщик файлов для РЕКУРСИИ
+		std::vector <FILE_INFO> VD;
+
+		//Получилось собрать ?
+		if(this->DIRGET(VD, S_OBJ.PATH) != CURLE_OK)
+			return CURLE_URL_MALFORMAT; //нет
+		
+		std::cin >> m;
+
+		//рекурсия
+		//закидываем обновленный клиент путь на созданный дир и старый сервер + список новых обьектов
+		if(this->MDOWNLOAD_DIR(VD,PATH_NEW_DIR) == CURLM_OK)
+			res = CURLE_OK;
 		else
 			return CURLE_URL_MALFORMAT;
 
 	}
-	else
+	else//это файл
 	{	
 		res = this->DOWNLOAD_FILE(BUILD_DOWNLOAD_PATH(C_OBJ,S_OBJ.PATH), S_OBJ.PATH);
 	}
@@ -149,11 +210,26 @@ CURLcode FTP_CONFIG::DOWNLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
 	return res;	
 }
 
+struct curl_slist* CREATE_COMMAND_UCREATE_DIR( std::string PATH_DIR_SERVER, std::string PATH_DIR_PC)
+{
+		//команда
+		struct curl_slist* command = nullptr;
+		std::string dir_name = GET_FILENAME(PATH_DIR_PC);
+
+		//MKD
+		std::string command_mkd = "MKD " + PATH_DIR_SERVER + "/" + dir_name;
+		//std::cout << command_mkd << "\n";
+		command = curl_slist_append(command, command_mkd.c_str());
+		return command;
+}
+
 CURLcode FTP_CONFIG::UPLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
 {
 	CURLcode res;	
 
 	std::filesystem::directory_entry entry (C_OBJ);
+
+	//ЭТО директория
 	if(entry.is_directory())
 	{
 		std::string PATH_DIR_SERVER = S_OBJ.PATH;
@@ -166,23 +242,11 @@ CURLcode FTP_CONFIG::UPLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
 		curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
 
 		//адресс URL
-		std::string CURL_URL = (this->URL + PATH_DIR_SERVER);
+		std::string CURL_URL = (this->URL + PATH_DIR_SERVER + "/");
 		curl_easy_setopt(curl, CURLOPT_URL, CURL_URL.c_str());
 	
 		//команда
-		struct curl_slist* command = nullptr;
-		std::string dir_name = GET_FILENAME(PATH_DIR_PC);
-
-		//CWD
-		std::string cwd = "CWD /" + PATH_DIR_SERVER;
-		if(cwd.back() == '/' && !PATH_DIR_SERVER.empty())
-			cwd.pop_back();
-		command = curl_slist_append(command, cwd.c_str());
-
-		//MKD
-		std::string command_mkd = "MKD " + dir_name;
-		command = curl_slist_append(command, command_mkd.c_str());
-
+		struct curl_slist* command = CREATE_COMMAND_UCREATE_DIR(PATH_DIR_SERVER, PATH_DIR_PC);
 		curl_easy_setopt(curl, CURLOPT_QUOTE, command);
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 
@@ -195,8 +259,6 @@ CURLcode FTP_CONFIG::UPLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
 		//обработка ошибки
 		long ftp_code = 0;
     		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &ftp_code);
-
-		std::cout << "FTP RESPONSE: " << ftp_code << "\n";
 
 		//очиска 
 		curl_slist_free_all(command);
@@ -218,34 +280,31 @@ CURLcode FTP_CONFIG::UPLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
     			return res;
 		}
 
+		//все ок -- ЭТАП ЗАПУКСКА ВОЛШЕБНОЙ РЕКУРСИИ
 		if(res == CURLE_OK)
 		{
+			//получили список директорий в VP из клиента
 			DIRGET_CLIENT(VP, PATH_DIR_PC);
-			std::cout << "#1" << "\n";
-				
-			if(this->MUPLOAD_DIR(VP,C_OBJ, S_OBJ.PATH) == CURLM_OK)
-				return CURLE_OK;
+			
+			//выполняем рекурсивно и в конце проверка
+			if(this->MUPLOAD_DIR(VP,BUILD_UPLOAD_PATH(C_OBJ ,S_OBJ.PATH)) == CURLM_OK)
+				return CURLE_OK; //да
 			else
-				return CURLE_URL_MALFORMAT;
+				return CURLE_URL_MALFORMAT; //нет
 
-			std::cout << "#2" << "\n";
 		}
-
-		return res;
-	
 	}
-	else
+	else //ЭТО ФАЙЛ
 	{
 		res = this->UPLOAD_FILE(C_OBJ, BUILD_UPLOAD_PATH(C_OBJ,S_OBJ.PATH));
 	}
 
-	std::cout << "#3" << "\n";
-
+	//Результат
 	return res;
 }
 
 
-//загрузка файлов с сервера
+//загрузка файлов с сервера_
 CURLcode FTP_CONFIG::DOWNLOAD_FILE(const std::string PATH_FILE_PC,
 				   const std::string PATH_FILE_SERVER)
 {	
@@ -256,22 +315,25 @@ CURLcode FTP_CONFIG::DOWNLOAD_FILE(const std::string PATH_FILE_PC,
 	//настройка запроса
 	curl_easy_setopt(curl, CURLOPT_USERNAME, USERNAME.c_str());
 	curl_easy_setopt(curl, CURLOPT_PASSWORD, PASSWORD.c_str());
-	curl_easy_setopt(curl, CURLOPT_URL,(this->URL + PATH_FILE_SERVER).c_str());	//адресс файла на серваке
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WRITE_CALLB_FILE);		//функция для отправки по частям
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);				//ссылка на файл
-									
-    	curl_easy_setopt(curl, CURLOPT_UPLOAD, 0L);
+	//адресс файла на серваке
+	curl_easy_setopt(curl, CURLOPT_URL,(this->URL + PATH_FILE_SERVER).c_str());
+	//функция для отправки по частям
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WRITE_CALLB_FILE);
+	//ссылка на файл
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
+	curl_easy_setopt(curl, CURLOPT_UPLOAD, 0L);
 
 	
-	//запрос + закрытие файла
+	//запрос + закрытие файла + reset
 	CURLcode res = curl_easy_perform(curl);
+	curl_easy_reset(curl);	
 	file.close();
 
 	return res;
 }
 
 
-//загрузка на сервер
+//загрузка на сервер_
 CURLcode FTP_CONFIG::UPLOAD_FILE(const std::string PATH_FILE_PC,
                                  const std::string PATH_FILE_SERVER)
 {
@@ -296,10 +358,13 @@ CURLcode FTP_CONFIG::UPLOAD_FILE(const std::string PATH_FILE_PC,
 	curl_easy_setopt(curl, CURLOPT_READDATA, &file);
 	curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, file_size);
 
+	//выполнение
 	CURLcode res = curl_easy_perform(curl);
 
+	//закрытие + сброс
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 0L);
 	file.close();
+	curl_easy_reset(curl);	
 	
 	return res;
 }
@@ -307,16 +372,28 @@ CURLcode FTP_CONFIG::UPLOAD_FILE(const std::string PATH_FILE_PC,
 //DOWN_DIR - multi
 bool FTP_CONFIG::CREATE_CDIRm(std::string PATH_DIR_PC, std::string PATH_DIR_SERVER)
 {	
-	PATH_DIR_PC = PATH_DIR_PC + GET_FILENAME(PATH_DIR_SERVER);
+	int m;
+	PATH_DIR_PC = BUILD_DOWNLOAD_PATH(PATH_DIR_PC ,PATH_DIR_SERVER);
+	std::cout << PATH_DIR_PC << "\n";
+	std::cin >> m;
+	bool flag {true};
+	std::error_code ecr;
+	if(PATH_DIR_PC.empty())
+		return false;
 
 	if(!std::filesystem::exists(PATH_DIR_PC))
 	{
 		if(!std::filesystem::create_directory(PATH_DIR_PC))
 		{
-			return false;
+			flag = false;
+		}
+		if(ecr)
+		{
+			std::cerr << "ERROR_FILESYSTEM_CREATING: " << ecr.message() << "\n";
+			flag = false;
 		}
 	}
-	return true;
+	return flag;
 }
 
 
@@ -328,26 +405,14 @@ void FTP_CONFIG::CREATE_SDIRm(std::string PATH_DIR_PC, std::string PATH_DIR_SERV
 	curl_easy_setopt(OBJ.curl, CURLOPT_PASSWORD, PASSWORD.c_str());
 
 	//адресс URL
-	std::string CURL_URL = (this->URL + PATH_DIR_SERVER);
+	//std::cout << "CREATE_SDIR = " << this->URL + PATH_DIR_SERVER + "/" << "\n";
+	std::string CURL_URL = (this->URL + PATH_DIR_SERVER + "/");
 	curl_easy_setopt(OBJ.curl, CURLOPT_URL, CURL_URL.c_str());
 	
 	//команда:
-	struct curl_slist* command = nullptr;
-	std::string dir_name = GET_FILENAME(PATH_DIR_PC);
-
-	//#1 CWD
-	std::string cwd = "CWD /" + PATH_DIR_SERVER;
-	if(cwd.back() == '/' && !PATH_DIR_SERVER.empty())
-		cwd.pop_back();
-	std::cout << cwd <<"\n";
-	command = curl_slist_append(command, cwd.c_str());
-
-	//#2 MKD
-	std::string command_mkd = "MKD " + dir_name;
-	std::cout << command_mkd << "\n";
-	command = curl_slist_append(command, command_mkd.c_str());
-
-	curl_easy_setopt(OBJ.curl, CURLOPT_QUOTE, command);
+	OBJ.command = CREATE_COMMAND_UCREATE_DIR(PATH_DIR_SERVER, PATH_DIR_PC);
+	
+	curl_easy_setopt(OBJ.curl, CURLOPT_QUOTE, OBJ.command);
 	curl_easy_setopt(OBJ.curl, CURLOPT_NOBODY, 1L);
 }
 
@@ -355,8 +420,9 @@ void FTP_CONFIG::CREATE_SDIRm(std::string PATH_DIR_PC, std::string PATH_DIR_SERV
 void FTP_CONFIG::UPLOAD_FILEm(const std::string PATH_FILE_PC,
                               const std::string PATH_FILE_SERVER, UPLOAD_TASK& OBJ)
 {
-	std::cout << PATH_FILE_PC << "\n";
-	std::cout << this->URL + PATH_FILE_SERVER << "\n";
+	//std::cout << PATH_FILE_PC << "\n";
+	//std::cout << this->URL + PATH_FILE_SERVER << "\n";
+	std::cout << "CREATE_SDIR = " << PATH_FILE_PC  << "||" << this->URL + PATH_FILE_SERVER << "\n";
 
 	OBJ.file = new std::ifstream();
 	OBJ.file_name = GET_FILENAME(PATH_FILE_SERVER);

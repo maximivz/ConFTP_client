@@ -12,12 +12,9 @@ void CLEAN_STRING(std::string& str)
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
 }
 
-//изменение пути
+//изменение пути c \ на /
 std::string CHANGE_PATH(std::string path)
 {
-    //if(path == "*")
-    //	return "";
-
     std::replace(
         path.begin(),
         path.end(),
@@ -31,17 +28,18 @@ std::string CHANGE_PATH(std::string path)
 //получение имени файла
 std::string GET_FILENAME(std::string path)
 {
-	if (!path.empty() && path.back() == '/')
-	{
-    		path.pop_back();
-	}
+	//если корень
+	while(!path.empty() && path.back() == '/')
+		path.pop_back();
 
+	//поиск последнего для среза
 	size_t pos = path.rfind('/');
 
-	if (pos == std::string::npos)
-		return path;
-
-	return path.substr(pos + 1);
+	if (pos != std::string::npos)
+		path = path.substr(pos + 1);
+		if(path == "." || path == "..")
+			return "";
+	return path;
 }
 
 
@@ -116,13 +114,18 @@ size_t WRITE_CALLB_DIR(void* ptr, // данные с сервера
 }
 
 //постройка DOWN PATH
-std::string BUILD_DOWNLOAD_PATH(std::string local_dir,
-				std::string server_file)
+std::string BUILD_DOWNLOAD_PATH(std::string local_dir, std::string server_file)
 {
 	std::string out_local;
 	std::string filename = GET_FILENAME(server_file);
 
-	if (local_dir != "" && local_dir.back() == '/')
+	if(filename.empty())
+		return "";
+
+	if(local_dir.empty())
+		return filename;
+	
+	if(local_dir.back() == '/')
 		out_local = local_dir + filename;
 	else
 		out_local = local_dir + "/" + filename;
@@ -131,17 +134,14 @@ std::string BUILD_DOWNLOAD_PATH(std::string local_dir,
 }
 
 //постройка UP PATH
-std::string BUILD_UPLOAD_PATH(std::string local_file,
-			      std::string server_dir) 
+std::string BUILD_UPLOAD_PATH(std::string local_file, std::string server_dir) 
 {
+	//итог для сервака 
 	std::string out_server;
-	std::string filename = GET_FILENAME(local_file);
-	//std::cout << "#$" << local_file << "&&"<< server_dir <<"\n";
 
-	if (server_dir != "" && server_dir.back() == '/')
-		out_server = server_dir + filename;
-	else
-		out_server = server_dir + '/' + filename;
+	std::string filename = GET_FILENAME(local_file);
+	
+	out_server = server_dir + '/' + filename;
 
 	//std::cout<< out_server << "\n";
 
@@ -181,16 +181,12 @@ std::string ChangeSpaces(std::string s)
 //Сброс пути обратно к верхней дир
 std::string S_UP_PATH(std::string path)
 {
- 	if (!path.empty() && path.back() == '/')
-		path.pop_back();
-
     	size_t pos = path.rfind('/');
 
     	if (pos != std::string::npos)
-        	return path.substr(0, pos + 1);
+        	return path.substr(0, pos);
 	else
 		return "";
-
 
     	return path;
 }

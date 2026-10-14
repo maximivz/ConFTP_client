@@ -270,7 +270,7 @@ void SERVER_FILE_SYSTEM(FTP_CONFIG& T_FTP,std::string& GET_OBJ,char& Tobj)
 				//диретория ли это
 				if(VD[num].type == 'd')
 				{
-					PATH = VD[num].PATH;
+					PATH = VD[num].PATH;	
 					CURLcode res = T_FTP.DIRGET(VD, PATH);
 					OK_CONNECTION(res);
 
