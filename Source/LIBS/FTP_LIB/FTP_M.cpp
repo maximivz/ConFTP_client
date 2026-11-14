@@ -90,7 +90,7 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
 		CURLMsg* msg;
 		int msgs_left = 0;
 
-		while ((msg = curl_multi_info_read(multi, &msgs_left)) != nullptr && msgs_left > 0)
+		while ((msg = curl_multi_info_read(multi, &msgs_left)))
 		{
     			// завершён один из объектов
     			if (msg->msg == CURLMSG_DONE)
@@ -149,7 +149,7 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
     		}
 		
 	}
-	
+/*	
 	// обработка завершившихся хендлов
 	CURLMsg* msg;
 	int msgs_left = 0;
@@ -208,7 +208,7 @@ CURLMcode FTP_CONFIG::MUPLOAD_DIR(std::vector<std::filesystem::directory_entry> 
     	}
 
 
-	
+*/	
 	//имеються ошибки-> Выход
 	if(mer != CURLM_OK || easy_error != CURLE_OK)
 	{
@@ -340,7 +340,7 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
 		CURLMsg* msg;
 		int msgs_left = 0;
 
-		while ((msg = curl_multi_info_read(multi, &msgs_left)) != nullptr && msgs_left > 0)
+		while ((msg = curl_multi_info_read(multi, &msgs_left)) != nullptr)
 		{
     			// завершён один из объектов
     			if (msg->msg == CURLMSG_DONE)
@@ -391,6 +391,7 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
 		}
 	}
 
+/*
 	//ПОВТОРНЫЙ РАЗБОР - ФИНАЛЬНЫЙ 
 	CURLMsg* msg;
 	int msgs_left = 0;
@@ -436,7 +437,7 @@ CURLMcode FTP_CONFIG::MDOWNLOAD_DIR(std::vector <FILE_INFO> VP,std::string C_OBJ
 		}
         
     	}
-
+*/
 	//ЕСЛИ ЕСТЬ ОШИБКА КАКАЯ ЛИ ТО ВЫРУБАЕМ ВСЕ 
 	if(mer != CURLM_OK || easy_error != CURLE_OK)
 	{

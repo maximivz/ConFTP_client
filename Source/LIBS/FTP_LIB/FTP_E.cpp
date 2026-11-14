@@ -90,8 +90,6 @@ CURLcode FTP_CONFIG::ACTIVATION_PROFILE()
 	{ 
 		return CURLE_FAILED_INIT;	
 	}
-	//для мульти
-	multi = curl_multi_init();
 	
 	//для разбора результата
 	CURLcode res;
@@ -155,8 +153,8 @@ CURLcode FTP_CONFIG::DOWNLOAD_PROCESS(std::string C_OBJ, FILE_INFO S_OBJ)
 		int m;
 		std::error_code ecr;
 		std::string PATH_NEW_DIR = BUILD_DOWNLOAD_PATH(C_OBJ ,S_OBJ.PATH);
-		std::cout << PATH_NEW_DIR << "\n";
-		std::cin >> m;
+		//std::cout << PATH_NEW_DIR << "\n";
+		//std::cin >> m;
 
 		//std::string PATH_NEW_DIR = BUILD_DOWNLOAD_PATH(C_OBJ ,GET_FILENAME(S_OBJ.PATH));
 		if(!std::filesystem::exists(PATH_NEW_DIR))
@@ -374,7 +372,7 @@ bool FTP_CONFIG::CREATE_CDIRm(std::string PATH_DIR_PC, std::string PATH_DIR_SERV
 {	
 	int m;
 	PATH_DIR_PC = BUILD_DOWNLOAD_PATH(PATH_DIR_PC ,PATH_DIR_SERVER);
-	std::cout << PATH_DIR_PC << "\n";
+	//std::cout << PATH_DIR_PC << "\n";
 	std::cin >> m;
 	bool flag {true};
 	std::error_code ecr;
@@ -422,7 +420,7 @@ void FTP_CONFIG::UPLOAD_FILEm(const std::string PATH_FILE_PC,
 {
 	//std::cout << PATH_FILE_PC << "\n";
 	//std::cout << this->URL + PATH_FILE_SERVER << "\n";
-	std::cout << "CREATE_SDIR = " << PATH_FILE_PC  << "||" << this->URL + PATH_FILE_SERVER << "\n";
+	//std::cout << "CREATE_SDIR = " << PATH_FILE_PC  << "||" << this->URL + PATH_FILE_SERVER << "\n";
 
 	OBJ.file = new std::ifstream();
 	OBJ.file_name = GET_FILENAME(PATH_FILE_SERVER);
